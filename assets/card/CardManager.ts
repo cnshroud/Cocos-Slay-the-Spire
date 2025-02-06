@@ -24,7 +24,11 @@ export class CardManager extends Component {
     public cardId: number;
 
     //判断是否移动
-    ismove: boolean = false;
+    private ismove: boolean = false;
+    // 在类的属性中添加变量来存储触摸起始点的位置
+    private touchStartPos: { x: number, y: number } | null = null;
+    //卡牌原来位置
+    private cardPos: { x: number, y: number } | null = null;
 
     start() {
         this.initLiestenr();
@@ -42,23 +46,38 @@ export class CardManager extends Component {
         this.node.on(Node.EventType.TOUCH_MOVE, this.touchMove, this);
         this.node.on(Node.EventType.TOUCH_END, this.touchEnd, this);
     }
+    /**
+     * 卡牌宽高变化
+     */
+    changeSize(width: number, height: number) {
+        
+        this.node.getComponent(UITransform).width += width;
+        this.node.getComponent(UITransform).height += height;
+    }
 
     /**
      * 当手指触点落在卡牌内时
      */
-    touchStart() {
+    touchStart(e: EventTouch) {
         console.log("touchStart");
+        console.log("是否开始移动",this.ismove);
         this.ismove = true;
-        this.node.getComponent(UITransform).width += 50;
-        this.node.getComponent(UITransform).height += 100;
+        // 获取触摸起始点的位置
+        this.touchStartPos = e.getLocation();
+        // 获取卡牌的初始位置
+        this.cardPos = this.node.getPosition();
+        console.log("touchStartPos",this.touchStartPos);
+        this.changeSize(50,100);
     }
     /**
      * 当手指离开卡牌时
      */
     touchEnd() {
-        console.log("touchEnd");
-        this.node.getComponent(UITransform).width -= 50;
-        this.node.getComponent(UITransform).height -= 100;
+        console.log("touchEnd");  
+        console.log("是否开始移动",this.ismove);
+        this.ismove = false;
+        this.changeSize(-50,-100);
+        this.node.setPosition(this.cardPos.x,this.cardPos.y,0);
     }
     /**
      * 当手指在卡牌上移动时
@@ -66,8 +85,16 @@ export class CardManager extends Component {
     touchMove(e: EventTouch) {
         console.log("touchMove");
         if (this.ismove) {
-            this.node.setPosition(e.getLocation().x, e.getLocation().y, 0);
+            const chaX =e.getLocation().x-this.touchStartPos.x; 
+            const chaY =e.getLocation().y-this.touchStartPos.y;
+            // 更新触摸起始点的位置
+            this.touchStartPos = e.getLocation(); 
+            // 更新卡牌的位置
+            this.node.setPosition(this.node.getPosition().x+chaX, this.node.getPosition().y+chaY, 0);
+
+            
         }
+
     }
 
 
